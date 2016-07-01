@@ -47,4 +47,12 @@ Palate
 	Length
 Conclusion
 	Quality
+		Poor
+		Acceptable
+		Good
+		Excellent
 	Maturity
+		Immature
+		Ready to Drink but could age
+		Ready to Drink
+		Tired
