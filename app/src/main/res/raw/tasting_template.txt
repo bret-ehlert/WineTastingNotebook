@@ -1,0 +1,50 @@
+Appearance
+	Clarity
+			Clear
+			Dull
+			Cloudy
+			Sediment
+			Bubbles
+	Intensity
+			Low
+			Pale
+			Medium
+			Deep
+			Dark
+	Color
+		White
+			Colorless
+			Straw
+			Yellow
+			Gold
+			Amber
+		Red
+			Tawny
+			Garnet
+			Ruby
+			Purple
+Nose
+	Condition
+			Clean
+			Faulty
+	Intensity
+			Light
+			Medium
+			High
+	Development
+			Youthful
+			Developing
+			Aged
+	Aromas
+Palate
+	Sweetness
+	Acidity
+	Tannin
+	Body
+	Intensity
+	Flavors
+	Alcohol
+	Length
+Conclusion
+	Quality
+	Maturity
