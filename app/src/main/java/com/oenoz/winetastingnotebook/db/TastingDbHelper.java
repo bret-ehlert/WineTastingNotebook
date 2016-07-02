@@ -7,11 +7,18 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import com.oenoz.winetastingnotebook.R;
+import com.oenoz.winetastingnotebook.db.schema.ReferenceItemBaseColumns;
+import com.oenoz.winetastingnotebook.db.schema.RegionTable;
+import com.oenoz.winetastingnotebook.db.schema.TastingTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeGroupTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeValueTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateBaseColumns;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateGroupTable;
+import com.oenoz.winetastingnotebook.db.schema.TastingValueTable;
+import com.oenoz.winetastingnotebook.db.schema.VarietyTable;
+import com.oenoz.winetastingnotebook.db.schema.WineTable;
+import com.oenoz.winetastingnotebook.db.schema.WineryTable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -37,6 +44,17 @@ public class TastingDbHelper extends SQLiteOpenHelper {
         db.execSQL(TastingTemplateAttributeGroupTable.GetCreateSql());
         db.execSQL(TastingTemplateAttributeValueTable.GetCreateSql());
         populateTemplate(db);
+
+        db.execSQL(RegionTable.getCreateSql());
+        populateRegions(db);
+
+        db.execSQL(VarietyTable.getCreateSql());
+        populateVarieties(db);
+
+        db.execSQL(WineryTable.getCreateSql());
+        db.execSQL(WineTable.getCreateSql());
+        db.execSQL(TastingTable.getCreateSql());
+        db.execSQL(TastingValueTable.getCreateSql());
     }
 
     void populateTemplate(SQLiteDatabase db) {
@@ -99,6 +117,70 @@ public class TastingDbHelper extends SQLiteOpenHelper {
             }
             catch (IOException e) {
                 Log.w(LOG_TAG, "error closing tasting template stream", e);
+            }
+        }
+    }
+
+    void populateRegions(SQLiteDatabase db) {
+        InputStream stream = mContext.getResources().openRawResource(R.raw.regions);
+        try {
+            db.beginTransaction();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+            String line;
+            long[] ids = new long[5];
+            while ((line = reader.readLine()) != null) {
+                int level = line.lastIndexOf("\t") + 1;
+                ContentValues contentValues = ReferenceItemBaseColumns.getContentValues(line.trim());
+                if(level > 0) {
+                    contentValues.put(RegionTable.COLUMN_PARENT, ids[level - 1]);
+                }
+                ids[level] = db.insert(RegionTable.TABLE_NAME, null, contentValues);
+                for (int i = level + 1; i < ids.length; i++) {
+                    ids[i] = -1;
+                }
+            }
+
+            db.setTransactionSuccessful();
+        }
+        catch (IOException e) {
+            Log.e(LOG_TAG, "populateRegions failed", e);
+        }
+        finally {
+            db.endTransaction();
+            try {
+                stream.close();
+            }
+            catch (IOException e) {
+                Log.w(LOG_TAG, "error closing regions file stream", e);
+            }
+        }
+    }
+
+    void populateVarieties(SQLiteDatabase db) {
+        InputStream stream = mContext.getResources().openRawResource(R.raw.varieties);
+        try {
+            db.beginTransaction();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                ContentValues contentValues = ReferenceItemBaseColumns.getContentValues(line.trim());
+                db.insert(VarietyTable.TABLE_NAME, null, contentValues);
+            }
+
+            db.setTransactionSuccessful();
+        }
+        catch (IOException e) {
+            Log.e(LOG_TAG, "populateVarieties failed", e);
+        }
+        finally {
+            db.endTransaction();
+            try {
+                stream.close();
+            }
+            catch (IOException e) {
+                Log.w(LOG_TAG, "error closing varieties file stream", e);
             }
         }
     }

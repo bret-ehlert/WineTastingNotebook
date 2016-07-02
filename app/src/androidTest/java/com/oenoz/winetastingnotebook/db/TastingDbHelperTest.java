@@ -2,107 +2,161 @@ package com.oenoz.winetastingnotebook.db;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDatabaseLockedException;
-import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Region;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 
+import com.oenoz.winetastingnotebook.db.schema.RegionTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeGroupTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeValueTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateGroupTable;
+import com.oenoz.winetastingnotebook.db.schema.VarietyTable;
 
+import java.net.PortUnreachableException;
 import java.util.ArrayList;
 
 public class TastingDbHelperTest extends AndroidTestCase
 {
-    public void testCreateDb() throws Throwable {
+    SQLiteDatabase db;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
         mContext.deleteDatabase(TastingDbHelper.DATABASE_NAME);
-        SQLiteDatabase db = new TastingDbHelper(this.mContext).getWritableDatabase();
+        db = new TastingDbHelper(this.mContext).getWritableDatabase();
         assertEquals(true, db.isOpen());
-        checkTastingTemplateGroups(db);
-        checkTastingTemplateAttributes(db);
-        checkTastingTemplateAttributeGroups(db);
-        checkTastingTemplateAttributeValues(db);
     }
 
     // TODO check no goups without attributes, no attributes without values, not attribute groups without values, etc.
 
-    void checkTastingTemplateGroups(SQLiteDatabase db) {
+    public void testTastingTemplateGroups() {
         Cursor cursor = db.rawQuery("SELECT " + TastingTemplateGroupTable.COLUMN_NAME + " FROM " + TastingTemplateGroupTable.TABLE_NAME + " ORDER BY " + TastingTemplateGroupTable.COLUMN_SEQUENCE, null);
-        assertCusorContents(cursor, "Appearance", "Nose", "Palate", "Conclusion");
+        assertCursorContents(cursor, "Appearance", "Nose", "Palate", "Conclusion");
     }
 
-    void checkTastingTemplateAttributes(SQLiteDatabase db) {
-        checkTastingTemplateAttributes(db, "Appearance", "Clarity", "Intensity", "Color");
-        checkTastingTemplateAttributes(db, "Nose", "Condition", "Intensity", "Development", "Aromas");
-        checkTastingTemplateAttributes(db, "Palate", "Sweetness", "Acidity", "Tannin", "Body", "Intensity", "Flavors", "Alcohol", "Length");
-        checkTastingTemplateAttributes(db, "Conclusion", "Quality", "Maturity");
+    public void testTastingTemplateAttributes() {
+        assertTastingTemplateAttributes("Appearance", "Clarity", "Intensity", "Color");
+        assertTastingTemplateAttributes("Nose", "Condition", "Intensity", "Development", "Aromas");
+        assertTastingTemplateAttributes("Palate", "Sweetness", "Acidity", "Tannin", "Body", "Intensity", "Flavors", "Alcohol", "Length");
+        assertTastingTemplateAttributes("Conclusion", "Quality", "Maturity");
     }
 
-    void checkTastingTemplateAttributeGroups(SQLiteDatabase db) {
-        checkTastingTemplateAttibuteGroups(db, "Appearance", "Color", "White", "Red");
+    public void testTastingTemplateAttributeGroups() {
+        assertTastingTemplateAttibuteGroups("Appearance", "Color", "White", "Red");
         // TODO checkTastingTemplateAttibuteGroups(db, "Nose", "Aromas", ...);
         // TODO checkTastingTemplateAttibuteGroups(db, "Palate", "Flavors", ...);
     }
 
-    void checkTastingTemplateAttributeValues(SQLiteDatabase db) {
-        checkTastingTemplateAttibuteValues(db, "Appearance", "Clarity", "Clear", "Dull", "Cloudy", "Sediment", "Bubbles");
-        checkTastingTemplateAttibuteGroupValues(db, "Appearance", "Color", "White", "Colorless", "Straw", "Yellow", "Gold", "Amber");
-        checkTastingTemplateAttibuteGroupValues(db, "Appearance", "Color", "Red", "Tawny", "Garnet", "Ruby", "Purple");
+    public void testTastingTemplateAttributeValues() {
+        assertTastingTemplateAttibuteValues("Appearance", "Clarity", "Clear", "Dull", "Cloudy", "Sediment", "Bubbles");
+        assertTastingTemplateAttibuteGroupValues("Appearance", "Color", "White", "Colorless", "Straw", "Yellow", "Gold", "Amber");
+        assertTastingTemplateAttibuteGroupValues("Appearance", "Color", "Red", "Tawny", "Garnet", "Ruby", "Purple");
         // TODO checkTastingTemplateAttibuteGroupValues(db, "Nose", "Aromas", ...)
-        checkTastingTemplateAttibuteValues(db, "Palate", "Tannin", "None", "Light", "Medium", "High");
+        assertTastingTemplateAttibuteValues("Palate", "Tannin", "None", "Light", "Medium", "High");
         // TODO checkTastingTemplateAttibuteGroupValues(db, "Palate", "Flavors", ...)
-        checkTastingTemplateAttibuteValues(db, "Palate", "Length", "Short", "Medium", "Long");
-        checkTastingTemplateAttibuteValues(db, "Conclusion", "Maturity", "Immature", "Drink now or later", "Drink now", "Tired");
+        assertTastingTemplateAttibuteValues("Palate", "Length", "Short", "Medium", "Long");
+        assertTastingTemplateAttibuteValues("Conclusion", "Maturity", "Immature", "Drink now or later", "Drink now", "Tired");
     }
 
-    void checkTastingTemplateAttributes(SQLiteDatabase db, String group, String... expectedAttributes) {
+    public void testRegions() {
+        assertRegion("Australia");
+        assertRegion("Australia", "New South Wales");
+        assertRegion("Australia", "New South Wales", "Hunter Valley");
+        assertRegion("Australia", "Tasmania", "Tamar Valley");
+        assertRegion("Australia", "South Australia", "Barossa", "Barossa Valley");
+        assertRegion("Australia", "South Australia", "Barossa", "Eden Valley");
+        assertRegion("France", "Bordeaux", "Haut-Médoc");
+        assertRegion("France", "Bordeaux", "Médoc");
+        assertRegion("France", "Bordeaux", "Margaux");
+        assertRegion("France", "Bordeaux", "Saint-Émilion");
+        assertRegion("France", "Rhône", "Châteauneuf-du-Pape");
+        assertRegion("France", "Rhône", "Crozes-Hermitage");
+        assertRegion("United States", "California", "Napa Valley");
+        assertRegion("Italy", "Tuscany", "Chianti");
+    }
+
+    public void testVarieties() {
+        assertVariety("Pinot Noir");
+        assertVariety("Shiraz");
+        assertVariety("Cabernet Sauvignon");
+        assertVariety("Grenache");
+        assertVariety("Tempranillo");
+        assertVariety("Sangiovese");
+        assertVariety("Nebbiolo");
+        assertVariety("Riesling");
+        assertVariety("Chardonnay");
+        assertVariety("Sauvignon Blanc");
+    }
+
+    void assertTastingTemplateAttributes(String group, String... expectedAttributes) {
         Cursor cursor = db.rawQuery(
                 "SELECT " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " FROM " + TastingTemplateAttributeTable.TABLE_NAME +
-                SqlHelper.InnerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
+                SqlHelper.innerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
                 " WHERE " + TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_NAME + " = ?" +
                 " ORDER BY " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_SEQUENCE, new String[] { group });
-        assertCusorContents(cursor, expectedAttributes);
+        assertCursorContents(cursor, expectedAttributes);
     }
 
-    void checkTastingTemplateAttibuteValues(SQLiteDatabase db, String group, String attribute, String... expectedValues) {
+    void assertTastingTemplateAttibuteValues(String group, String attribute, String... expectedValues) {
         Cursor cursor = db.rawQuery(
                 "SELECT " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_NAME + " FROM " + TastingTemplateAttributeValueTable.TABLE_NAME +
-                        SqlHelper.InnerJoin(TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeValueTable.TABLE_NAME, TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTE) +
-                        SqlHelper.InnerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
+                        SqlHelper.innerJoin(TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeValueTable.TABLE_NAME, TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTE) +
+                        SqlHelper.innerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
                         " WHERE " + TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_NAME + " = ?" +
                         " AND " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " = ? " +
                         " AND " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTEGROUP + " IS NULL " +
                         " ORDER BY " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_SEQUENCE, new String[] { group, attribute });
-        assertCusorContents(cursor, expectedValues);
+        assertCursorContents(cursor, expectedValues);
     }
 
-    void checkTastingTemplateAttibuteGroups(SQLiteDatabase db, String group, String attribute, String... expectedAttributeGroups) {
+    void assertTastingTemplateAttibuteGroups(String group, String attribute, String... expectedAttributeGroups) {
         Cursor cursor = db.rawQuery(
                 "SELECT " + TastingTemplateAttributeGroupTable.TABLE_NAME + "." + TastingTemplateAttributeGroupTable.COLUMN_NAME + " FROM " + TastingTemplateAttributeGroupTable.TABLE_NAME +
-                        SqlHelper.InnerJoin(TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeGroupTable.TABLE_NAME, TastingTemplateAttributeGroupTable.COLUMN_ATTRIBUTE) +
-                        SqlHelper.InnerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
+                        SqlHelper.innerJoin(TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeGroupTable.TABLE_NAME, TastingTemplateAttributeGroupTable.COLUMN_ATTRIBUTE) +
+                        SqlHelper.innerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
                         " WHERE " + TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_NAME + " = ?" +
                         " AND " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " = ? " +
                         " ORDER BY " + TastingTemplateAttributeGroupTable.TABLE_NAME + "." + TastingTemplateAttributeGroupTable.COLUMN_SEQUENCE, new String[] { group, attribute });
-        assertCusorContents(cursor, expectedAttributeGroups);
+        assertCursorContents(cursor, expectedAttributeGroups);
     }
 
-    void checkTastingTemplateAttibuteGroupValues(SQLiteDatabase db, String group, String attribute, String attributeGroup, String... expectedValues) {
+    void assertTastingTemplateAttibuteGroupValues(String group, String attribute, String attributeGroup, String... expectedValues) {
         Cursor cursor = db.rawQuery(
                 "SELECT " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_NAME + " FROM " + TastingTemplateAttributeValueTable.TABLE_NAME +
-                        SqlHelper.InnerJoin(TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeValueTable.TABLE_NAME, TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTE) +
-                        SqlHelper.InnerJoin(TastingTemplateAttributeGroupTable.TABLE_NAME, TastingTemplateAttributeValueTable.TABLE_NAME, TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTEGROUP) +
-                        SqlHelper.InnerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
+                        SqlHelper.innerJoin(TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeValueTable.TABLE_NAME, TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTE) +
+                        SqlHelper.innerJoin(TastingTemplateAttributeGroupTable.TABLE_NAME, TastingTemplateAttributeValueTable.TABLE_NAME, TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTEGROUP) +
+                        SqlHelper.innerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
                         " WHERE " + TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_NAME + " = ?" +
                         " AND " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " = ? " +
                         " AND " + TastingTemplateAttributeGroupTable.TABLE_NAME + "." + TastingTemplateAttributeGroupTable.COLUMN_NAME + " = ? " +
                         " ORDER BY " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_SEQUENCE, new String[] { group, attribute, attributeGroup });
-        assertCusorContents(cursor, expectedValues);
+        assertCursorContents(cursor, expectedValues);
     }
 
-    void assertCusorContents(Cursor cursor, String... expected) {
+    void assertRegion(String... heirarchy) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM " ).append(RegionTable.TABLE_NAME).append(" AS r0 ");
+        for(int i = 1; i < heirarchy.length; i++) {
+            sql.append("INNER JOIN ").append(RegionTable.TABLE_NAME).append(" AS r").append(i).append(" ON r").append(i).append(".").append(RegionTable.COLUMN_PARENT).append(" = ").append("r").append(i - 1).append(".").append(RegionTable._ID).append(" ");
+        }
+        sql.append("WHERE r0.").append(RegionTable.COLUMN_NAME).append(" = ? ");
+        for(int i = 1; i < heirarchy.length; i++) {
+            sql.append("AND r").append(i).append(".").append(RegionTable.COLUMN_NAME).append(" = ? ");
+        }
+        Cursor cursor = db.rawQuery(sql.toString(), heirarchy);
+        assertTrue(cursor.moveToNext());
+        assertEquals(1, cursor.getInt(0));
+        cursor.close();
+    }
+
+    void assertVariety(String variety) {
+        Cursor cursor = db.rawQuery("SELECT " + VarietyTable.COLUMN_NAME + " FROM " + VarietyTable.TABLE_NAME + " WHERE " + VarietyTable.COLUMN_NAME + " = ? COLLATE NOCASE", new String[] { variety });
+        assertCursorContents(cursor, variety);
+    }
+
+    void assertCursorContents(Cursor cursor, String... expected) {
         ArrayList<String> actual = new ArrayList<>();
         while (cursor.moveToNext()) {
             actual.add(cursor.getString(0));
