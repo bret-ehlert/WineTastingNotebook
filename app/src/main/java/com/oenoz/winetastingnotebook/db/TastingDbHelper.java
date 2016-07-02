@@ -48,18 +48,42 @@ public class TastingDbHelper extends SQLiteOpenHelper {
             String line;
             byte templateGroupSequence = 0;
             byte templateAttributeSequence = 0;
+            byte templateAttributeGroupSequence = 0;
+            byte templateAttributeValueSequence = 0;
             long templateGroupId = -1;
             long templateAttributeId = -1;
+            long templateAttributeGroupId = -1;
             while ((line = reader.readLine()) != null) {
                 int tabs = line.lastIndexOf("\t");
                 if (tabs == -1) {
                     ContentValues contentValues = TastingTemplateBaseColumns.getContentValues(line.trim(), templateGroupSequence++, true);
                     templateGroupId = db.insert(TastingTemplateGroupTable.TABLE_NAME, null, contentValues);
+                    templateAttributeSequence = 0;
+                    templateAttributeId = -1;
+                    templateAttributeGroupSequence = 0;
+                    templateAttributeGroupId = -1;
                 }
                 else if(tabs == 0) {
                     ContentValues contentValues = TastingTemplateBaseColumns.getContentValues(line.trim(), templateAttributeSequence++, true);
                     contentValues.put(TastingTemplateAttributeTable.COLUMN_GROUP, templateGroupId);
                     templateAttributeId = db.insert(TastingTemplateAttributeTable.TABLE_NAME, null, contentValues);
+                    templateAttributeGroupSequence = 0;
+                    templateAttributeGroupId = -1;
+                    templateAttributeValueSequence = 0;
+                }
+                else if(tabs == 1) {
+                    ContentValues contentValues = TastingTemplateBaseColumns.getContentValues(line.trim(), templateAttributeGroupSequence++, true);
+                    contentValues.put(TastingTemplateAttributeGroupTable.COLUMN_ATTRIBUTE, templateAttributeId);
+                    templateAttributeGroupId = db.insert(TastingTemplateAttributeGroupTable.TABLE_NAME, null, contentValues);
+                    templateAttributeValueSequence = 0;
+                }
+                else {
+                    ContentValues contentValues = TastingTemplateBaseColumns.getContentValues(line.trim(), templateAttributeValueSequence++, true);
+                    contentValues.put(TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTE, templateAttributeId);
+                    if (templateAttributeGroupId > -1) {
+                        contentValues.put(TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTEGROUP, templateAttributeGroupId);
+                    }
+                    db.insert(TastingTemplateAttributeValueTable.TABLE_NAME, null, contentValues);
                 }
             }
 
@@ -78,8 +102,6 @@ public class TastingDbHelper extends SQLiteOpenHelper {
             }
         }
     }
-
-
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {

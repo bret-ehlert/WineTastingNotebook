@@ -40,19 +40,26 @@ Palate
 	Sweetness
 	Acidity
 	Tannin
+			None
+			Light
+			Medium
+			High
 	Body
 	Intensity
 	Flavors
 	Alcohol
 	Length
+			Short
+			Medium
+			Long
 Conclusion
 	Quality
-		Poor
-		Acceptable
-		Good
-		Excellent
+			Poor
+			Acceptable
+			Good
+			Excellent
 	Maturity
-		Immature
-		Ready to Drink but could age
-		Ready to Drink
-		Tired
+			Immature
+			Drink now or later
+			Drink now
+			Tired
