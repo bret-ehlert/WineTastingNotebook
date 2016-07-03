@@ -1,20 +1,22 @@
 package com.oenoz.winetastingnotebook.db;
 
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Region;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 
+import com.oenoz.winetastingnotebook.CursorAssert;
 import com.oenoz.winetastingnotebook.db.schema.RegionTable;
+import com.oenoz.winetastingnotebook.db.schema.TastingTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeGroupTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeValueTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateGroupTable;
 import com.oenoz.winetastingnotebook.db.schema.VarietyTable;
 
-import java.net.PortUnreachableException;
-import java.util.ArrayList;
+import java.util.Date;
 
 public class TastingDbHelperTest extends AndroidTestCase
 {
@@ -33,7 +35,7 @@ public class TastingDbHelperTest extends AndroidTestCase
 
     public void testTastingTemplateGroups() {
         Cursor cursor = db.rawQuery("SELECT " + TastingTemplateGroupTable.COLUMN_NAME + " FROM " + TastingTemplateGroupTable.TABLE_NAME + " ORDER BY " + TastingTemplateGroupTable.COLUMN_SEQUENCE, null);
-        assertCursorContents(cursor, "Appearance", "Nose", "Palate", "Conclusion");
+        CursorAssert.assertContents(cursor, "Appearance", "Nose", "Palate", "Conclusion");
     }
 
     public void testTastingTemplateAttributes() {
@@ -90,13 +92,22 @@ public class TastingDbHelperTest extends AndroidTestCase
         assertVariety("Sauvignon Blanc");
     }
 
+    public void testNewTastingTime() {
+        long id = db.insert(TastingTable.TABLE_NAME, TastingTable.COLUMN_WINE, new ContentValues());
+        Cursor cursor = db.rawQuery("SELECT " + TastingTable.COLUMN_DATE + " FROM " + TastingTable.TABLE_NAME + " WHERE " + TastingTable._ID + " = ?", new String[] { Long.toString(id) });
+        assertTrue(cursor.moveToNext());
+        long dateDiff = new Date().getTime() - TastingTable.parseDate(cursor.getString(0)).getTime();
+        assertTrue(dateDiff < 1000);
+        cursor.close();
+    }
+
     void assertTastingTemplateAttributes(String group, String... expectedAttributes) {
         Cursor cursor = db.rawQuery(
                 "SELECT " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " FROM " + TastingTemplateAttributeTable.TABLE_NAME +
                 SqlHelper.innerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
                 " WHERE " + TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_NAME + " = ?" +
                 " ORDER BY " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_SEQUENCE, new String[] { group });
-        assertCursorContents(cursor, expectedAttributes);
+        CursorAssert.assertContents(cursor, expectedAttributes);
     }
 
     void assertTastingTemplateAttibuteValues(String group, String attribute, String... expectedValues) {
@@ -108,7 +119,7 @@ public class TastingDbHelperTest extends AndroidTestCase
                         " AND " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " = ? " +
                         " AND " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTEGROUP + " IS NULL " +
                         " ORDER BY " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_SEQUENCE, new String[] { group, attribute });
-        assertCursorContents(cursor, expectedValues);
+        CursorAssert.assertContents(cursor, expectedValues);
     }
 
     void assertTastingTemplateAttibuteGroups(String group, String attribute, String... expectedAttributeGroups) {
@@ -119,7 +130,7 @@ public class TastingDbHelperTest extends AndroidTestCase
                         " WHERE " + TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_NAME + " = ?" +
                         " AND " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " = ? " +
                         " ORDER BY " + TastingTemplateAttributeGroupTable.TABLE_NAME + "." + TastingTemplateAttributeGroupTable.COLUMN_SEQUENCE, new String[] { group, attribute });
-        assertCursorContents(cursor, expectedAttributeGroups);
+        CursorAssert.assertContents(cursor, expectedAttributeGroups);
     }
 
     void assertTastingTemplateAttibuteGroupValues(String group, String attribute, String attributeGroup, String... expectedValues) {
@@ -132,7 +143,7 @@ public class TastingDbHelperTest extends AndroidTestCase
                         " AND " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " = ? " +
                         " AND " + TastingTemplateAttributeGroupTable.TABLE_NAME + "." + TastingTemplateAttributeGroupTable.COLUMN_NAME + " = ? " +
                         " ORDER BY " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_SEQUENCE, new String[] { group, attribute, attributeGroup });
-        assertCursorContents(cursor, expectedValues);
+        CursorAssert.assertContents(cursor, expectedValues);
     }
 
     void assertRegion(String... heirarchy) {
@@ -153,15 +164,6 @@ public class TastingDbHelperTest extends AndroidTestCase
 
     void assertVariety(String variety) {
         Cursor cursor = db.rawQuery("SELECT " + VarietyTable.COLUMN_NAME + " FROM " + VarietyTable.TABLE_NAME + " WHERE " + VarietyTable.COLUMN_NAME + " = ? COLLATE NOCASE", new String[] { variety });
-        assertCursorContents(cursor, variety);
-    }
-
-    void assertCursorContents(Cursor cursor, String... expected) {
-        ArrayList<String> actual = new ArrayList<>();
-        while (cursor.moveToNext()) {
-            actual.add(cursor.getString(0));
-        }
-        cursor.close();
-        MoreAsserts.assertContentsInOrder(actual, expected);
+        CursorAssert.assertContents(cursor, variety);
     }
 }
