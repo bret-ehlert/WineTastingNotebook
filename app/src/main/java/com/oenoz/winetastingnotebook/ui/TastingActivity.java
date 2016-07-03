@@ -1,11 +1,13 @@
 package com.oenoz.winetastingnotebook.ui;
 
+import android.app.ActionBar;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TabLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -25,7 +27,7 @@ import android.widget.TextView;
 import com.oenoz.winetastingnotebook.R;
 import com.oenoz.winetastingnotebook.provider.TastingContentUri;
 
-public class TastingActivity extends AppCompatActivity implements TastingAttributeFragment.OnFragmentInteractionListener {
+public class TastingActivity extends AppCompatActivity implements ViewPager.OnPageChangeListener, TastingAttributeFragment.OnFragmentInteractionListener {
 
     private TastingPagerAdapter mSectionsPagerAdapter;
 
@@ -58,6 +60,15 @@ public class TastingActivity extends AppCompatActivity implements TastingAttribu
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.tastingViewPager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.addOnPageChangeListener(this);
+        onPageSelected(0);
+
+        TabLayout tabLayout = (TabLayout)findViewById(R.id.tab_layout);
+        tabLayout.setupWithViewPager(mViewPager);
+        //Setting tabs from adpater
+        //tabLayout.setTabsFromPagerAdapter (mSectionsPagerAdapter);
+
+        final ActionBar actionBar = getActionBar();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -93,6 +104,21 @@ public class TastingActivity extends AppCompatActivity implements TastingAttribu
 
     @Override
     public void onFragmentInteraction(Uri uri) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+        setTitle(mSectionsPagerAdapter.getSectionTitle(position));
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
 
     }
 }

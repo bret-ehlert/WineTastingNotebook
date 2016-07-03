@@ -31,8 +31,8 @@ public class MainActivityTest extends AndroidTestCase {
         Espresso.onView(ViewMatchers.withId(R.id.newTastingButton))
                 .perform(ViewActions.click());
 
-        Espresso.onView(ViewMatchers.withId(R.id.main_content))
-                .check(ViewAssertions.matches(ViewMatchers.withText("TastingActivity")));
+        //Espresso.onView(ViewMatchers.withId(R.id.main_content))
+         //       .check(ViewAssertions.matches(ViewMatchers.withText("TastingActivity")));
 
         Intents.intended(IntentMatchers.hasComponent(new ComponentName(getContext(), TastingActivity.class)));
 
