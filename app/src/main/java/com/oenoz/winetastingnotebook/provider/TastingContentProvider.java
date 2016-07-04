@@ -5,16 +5,13 @@ import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 
-import com.oenoz.winetastingnotebook.db.SqlHelper;
 import com.oenoz.winetastingnotebook.db.TastingDbHelper;
 import com.oenoz.winetastingnotebook.db.schema.TastingTable;
-import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeGroupTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeTable;
-import com.oenoz.winetastingnotebook.db.schema.TastingTemplateGroupTable;
+import com.oenoz.winetastingnotebook.db.schema.TastingTemplateSectionTable;
 
 public class TastingContentProvider extends ContentProvider {
     public static final String CONTENT_AUTHORITY = "com.oenoz.winetastingnotebook";
@@ -25,7 +22,12 @@ public class TastingContentProvider extends ContentProvider {
     private class UrlTypes {
         public static final int TASTING = 100;
         public static final int TASTING_SECTIONS = 101;
-        public static final int TASTING_SECTION = 102;
+        public static final int TASTING_SECTION_ATTRIBUTES = 102;
+    }
+
+    private class IdSegments {
+        public static final int TASTING = 1;
+        public static final int TASTING_SECTION = 3;
     }
 
     private TastingDbHelper mDbHelper;
@@ -35,7 +37,7 @@ public class TastingContentProvider extends ContentProvider {
         uriMatcher.addURI(CONTENT_AUTHORITY, TastingContentUri.PATH_TASTING, UrlTypes.TASTING);
         String tastingItemPath = TastingContentUri.PATH_TASTING + "/#/";
         uriMatcher.addURI(CONTENT_AUTHORITY, tastingItemPath + TastingContentUri.PATH_TASTING_SECTIONS, UrlTypes.TASTING_SECTIONS);
-        uriMatcher.addURI(CONTENT_AUTHORITY, tastingItemPath + TastingContentUri.PATH_TASTING_SECTION + "/#/", UrlTypes.TASTING_SECTION);
+        uriMatcher.addURI(CONTENT_AUTHORITY, tastingItemPath + TastingContentUri.PATH_TASTING_SECTION + "/#/" + TastingContentUri.PATH_TASTING_SECTION_ATTRIBUTES, UrlTypes.TASTING_SECTION_ATTRIBUTES);
         return uriMatcher;
     }
 
@@ -54,26 +56,34 @@ public class TastingContentProvider extends ContentProvider {
             case UrlTypes.TASTING_SECTIONS:
                 return queryTastingSections(uri, projection, selection, selectionArgs, sortOrder);
 
+            case UrlTypes.TASTING_SECTION_ATTRIBUTES:
+                return queryTastingSectionAttributes(uri, projection, selection, selectionArgs, sortOrder);
+
             default:
                 throw new UnsupportedOperationException("Query operation not supported: " + uri);
         }
     }
 
     Cursor queryTastingSections(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        long tastingId = Long.parseLong(uri.getPathSegments().get(1));
-        return mDbHelper.getReadableDatabase().query(
-                "(SELECT " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable._ID + " AS " + TastingContentSchema.ID + ", " +
-                            TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_NAME + " AS " + TastingContentSchema.TASTING_SECTION_GROUP_NAME + ", " +
-                            TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " AS " + TastingContentSchema.TASTING_SECTION_ATTRIBUTE_NAME + " " +
-                "FROM " + TastingTemplateAttributeTable.TABLE_NAME + " " +
-                SqlHelper.innerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) + " " +
-                " ORDER BY " + TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_SEQUENCE + ", " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_SEQUENCE + ")",
+        // TODO long tastingId = Long.parseLong(uri.getPathSegments().get(IdSegments.TASTING));
+        return mDbHelper.getReadableDatabase().query(TastingTemplateSectionTable.TABLE_NAME,
                 projection,
-                selection,
-                selectionArgs,
                 null,
                 null,
-                null);
+                null,
+                null,
+                TastingTemplateSectionTable.COLUMN_SEQUENCE);
+    }
+
+    Cursor queryTastingSectionAttributes(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        String sectionId = uri.getPathSegments().get(IdSegments.TASTING_SECTION);
+        return mDbHelper.getReadableDatabase().query(TastingTemplateAttributeTable.TABLE_NAME,
+                projection,
+                TastingTemplateAttributeTable.COLUMN_SECTION + " = ?",
+                new String[] { sectionId },
+                null,
+                null,
+                TastingTemplateSectionTable.COLUMN_SEQUENCE);
     }
 
     @Nullable

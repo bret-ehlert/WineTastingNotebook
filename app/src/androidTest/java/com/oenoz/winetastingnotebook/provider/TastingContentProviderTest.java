@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.test.AndroidTestCase;
 
 import com.oenoz.winetastingnotebook.CursorAssert;
-import com.oenoz.winetastingnotebook.db.schema.TastingTemplateGroupTable;
 
 public class TastingContentProviderTest extends AndroidTestCase {
 
@@ -17,32 +16,48 @@ public class TastingContentProviderTest extends AndroidTestCase {
         );
         Cursor cursor = mContext.getContentResolver().query(
                 TastingContentUri.forTastingSections(tastingUri),
-                new String[] { TastingContentSchema.TASTING_SECTION_GROUP_NAME, TastingContentSchema.TASTING_SECTION_ATTRIBUTE_NAME },
+                new String[] { TastingContentSchema.NAME },
                 null,
                 null,
-                null);
-        CursorAssert.assertContents(cursor, new CursorAssert.ToString() {
-            @Override
-            public String toString(Cursor cursor) {
-                return cursor.getString(0) + " / " + cursor.getString(1);
-            }},
-                "Appearance / Clarity",
-                "Appearance / Intensity",
-                "Appearance / Color",
-                "Nose / Condition",
-                "Nose / Intensity",
-                "Nose / Development",
-                "Nose / Aromas",
-                "Palate / Sweetness",
-                "Palate / Acidity",
-                "Palate / Tannin",
-                "Palate / Body",
-                "Palate / Intensity",
-                "Palate / Flavors",
-                "Palate / Alcohol",
-                "Palate / Length",
-                "Conclusion / Quality",
-                "Conclusion / Maturity"
+                TastingContentSchema.SEQUENCE);
+        CursorAssert.assertContents(cursor, "Appearance", "Nose", "Palate", "Conclusion");
+    }
+
+    public void testTastingSectionAttributes() {
+        Uri tastingUri = mContext.getContentResolver().insert(
+                TastingContentUri.forTasting(),
+                new ContentValues()
         );
+        Cursor sectionsCursor = mContext.getContentResolver().query(
+                TastingContentUri.forTastingSections(tastingUri),
+                new String[] { TastingContentSchema.ID, TastingContentSchema.NAME },
+                null,
+                null,
+                TastingContentSchema.SEQUENCE);
+
+        assertTrue(sectionsCursor.moveToNext());
+        Cursor cursor = getTastingSectionAttributes(tastingUri, sectionsCursor.getLong(0));
+        CursorAssert.assertContents(cursor, "Clarity", "Intensity", "Color");
+
+        assertTrue(sectionsCursor.moveToNext());
+        cursor = getTastingSectionAttributes(tastingUri, sectionsCursor.getLong(0));
+        CursorAssert.assertContents(cursor, "Condition", "Intensity", "Development", "Aromas");
+
+        assertTrue(sectionsCursor.moveToNext());
+        cursor = getTastingSectionAttributes(tastingUri, sectionsCursor.getLong(0));
+        CursorAssert.assertContents(cursor, "Sweetness", "Acidity", "Tannin", "Body", "Intensity", "Flavors", "Alcohol", "Length");
+
+        assertTrue(sectionsCursor.moveToNext());
+        cursor = getTastingSectionAttributes(tastingUri, sectionsCursor.getLong(0));
+        CursorAssert.assertContents(cursor, "Quality", "Maturity");
+    }
+
+    Cursor getTastingSectionAttributes(Uri tastingUri, long sectionId) {
+        return mContext.getContentResolver().query(
+                TastingContentUri.forTastingSectionAttributes(TastingContentUri.forTastingSection(tastingUri, sectionId)),
+                new String[] { TastingContentSchema.NAME },
+                null,
+                null,
+                TastingContentSchema.SEQUENCE);
     }
 }

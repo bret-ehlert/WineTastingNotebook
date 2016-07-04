@@ -4,36 +4,24 @@ import android.app.ActionBar;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
-import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-
-import android.widget.TextView;
 
 import com.oenoz.winetastingnotebook.R;
 import com.oenoz.winetastingnotebook.provider.TastingContentUri;
 
-public class TastingActivity extends AppCompatActivity implements ViewPager.OnPageChangeListener, TastingAttributeFragment.OnFragmentInteractionListener {
+public class TastingActivity extends AppCompatActivity implements ViewPager.OnPageChangeListener, TastingSectionFragment.OnFragmentInteractionListener, TastingAttributeFragment.OnFragmentInteractionListener {
 
-    private TastingPagerAdapter mSectionsPagerAdapter;
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
+    private TastingSectionPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
 
     @Override
@@ -55,10 +43,10 @@ public class TastingActivity extends AppCompatActivity implements ViewPager.OnPa
         else {
             tastingUri = Uri.parse(tastingUrl);
         }
-        mSectionsPagerAdapter = new TastingPagerAdapter(this, getSupportFragmentManager(), tastingUri);
+        mSectionsPagerAdapter = new TastingSectionPagerAdapter(this, getSupportFragmentManager(), tastingUri);
 
         // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.tastingViewPager);
+        mViewPager = (ViewPager) findViewById(R.id.tastingSectionsViewPager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.addOnPageChangeListener(this);
         onPageSelected(0);
@@ -109,7 +97,7 @@ public class TastingActivity extends AppCompatActivity implements ViewPager.OnPa
 
     @Override
     public void onPageSelected(int position) {
-        setTitle(mSectionsPagerAdapter.getSectionTitle(position));
+        //setTitle(mSectionsPagerAdapter.getSectionTitle(position));
     }
 
     @Override

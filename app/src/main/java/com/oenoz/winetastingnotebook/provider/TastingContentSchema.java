@@ -6,6 +6,6 @@ import com.oenoz.winetastingnotebook.db.schema.ReferenceItemBaseColumns;
 
 public class TastingContentSchema {
     public static final String ID = BaseColumns._ID;
-    public static final String TASTING_SECTION_GROUP_NAME = "sectionGroupName";
-    public static final String TASTING_SECTION_ATTRIBUTE_NAME = "sectionAttributeName";
+    public static final String NAME = "Name";
+    public static final String SEQUENCE = "Sequence";
 }

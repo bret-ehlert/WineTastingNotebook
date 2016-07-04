@@ -3,9 +3,7 @@ package com.oenoz.winetastingnotebook.db;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Region;
 import android.test.AndroidTestCase;
-import android.test.MoreAsserts;
 
 import com.oenoz.winetastingnotebook.CursorAssert;
 import com.oenoz.winetastingnotebook.db.schema.RegionTable;
@@ -13,7 +11,7 @@ import com.oenoz.winetastingnotebook.db.schema.TastingTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeGroupTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeValueTable;
-import com.oenoz.winetastingnotebook.db.schema.TastingTemplateGroupTable;
+import com.oenoz.winetastingnotebook.db.schema.TastingTemplateSectionTable;
 import com.oenoz.winetastingnotebook.db.schema.VarietyTable;
 
 import java.util.Date;
@@ -34,7 +32,7 @@ public class TastingDbHelperTest extends AndroidTestCase
     // TODO check no goups without attributes, no attributes without values, not attribute groups without values, etc.
 
     public void testTastingTemplateGroups() {
-        Cursor cursor = db.rawQuery("SELECT " + TastingTemplateGroupTable.COLUMN_NAME + " FROM " + TastingTemplateGroupTable.TABLE_NAME + " ORDER BY " + TastingTemplateGroupTable.COLUMN_SEQUENCE, null);
+        Cursor cursor = db.rawQuery("SELECT " + TastingTemplateSectionTable.COLUMN_NAME + " FROM " + TastingTemplateSectionTable.TABLE_NAME + " ORDER BY " + TastingTemplateSectionTable.COLUMN_SEQUENCE, null);
         CursorAssert.assertContents(cursor, "Appearance", "Nose", "Palate", "Conclusion");
     }
 
@@ -104,8 +102,8 @@ public class TastingDbHelperTest extends AndroidTestCase
     void assertTastingTemplateAttributes(String group, String... expectedAttributes) {
         Cursor cursor = db.rawQuery(
                 "SELECT " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " FROM " + TastingTemplateAttributeTable.TABLE_NAME +
-                SqlHelper.innerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
-                " WHERE " + TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_NAME + " = ?" +
+                SqlHelper.innerJoin(TastingTemplateSectionTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_SECTION) +
+                " WHERE " + TastingTemplateSectionTable.TABLE_NAME + "." + TastingTemplateSectionTable.COLUMN_NAME + " = ?" +
                 " ORDER BY " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_SEQUENCE, new String[] { group });
         CursorAssert.assertContents(cursor, expectedAttributes);
     }
@@ -114,8 +112,8 @@ public class TastingDbHelperTest extends AndroidTestCase
         Cursor cursor = db.rawQuery(
                 "SELECT " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_NAME + " FROM " + TastingTemplateAttributeValueTable.TABLE_NAME +
                         SqlHelper.innerJoin(TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeValueTable.TABLE_NAME, TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTE) +
-                        SqlHelper.innerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
-                        " WHERE " + TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_NAME + " = ?" +
+                        SqlHelper.innerJoin(TastingTemplateSectionTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_SECTION) +
+                        " WHERE " + TastingTemplateSectionTable.TABLE_NAME + "." + TastingTemplateSectionTable.COLUMN_NAME + " = ?" +
                         " AND " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " = ? " +
                         " AND " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTEGROUP + " IS NULL " +
                         " ORDER BY " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_SEQUENCE, new String[] { group, attribute });
@@ -126,8 +124,8 @@ public class TastingDbHelperTest extends AndroidTestCase
         Cursor cursor = db.rawQuery(
                 "SELECT " + TastingTemplateAttributeGroupTable.TABLE_NAME + "." + TastingTemplateAttributeGroupTable.COLUMN_NAME + " FROM " + TastingTemplateAttributeGroupTable.TABLE_NAME +
                         SqlHelper.innerJoin(TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeGroupTable.TABLE_NAME, TastingTemplateAttributeGroupTable.COLUMN_ATTRIBUTE) +
-                        SqlHelper.innerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
-                        " WHERE " + TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_NAME + " = ?" +
+                        SqlHelper.innerJoin(TastingTemplateSectionTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_SECTION) +
+                        " WHERE " + TastingTemplateSectionTable.TABLE_NAME + "." + TastingTemplateSectionTable.COLUMN_NAME + " = ?" +
                         " AND " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " = ? " +
                         " ORDER BY " + TastingTemplateAttributeGroupTable.TABLE_NAME + "." + TastingTemplateAttributeGroupTable.COLUMN_SEQUENCE, new String[] { group, attribute });
         CursorAssert.assertContents(cursor, expectedAttributeGroups);
@@ -138,8 +136,8 @@ public class TastingDbHelperTest extends AndroidTestCase
                 "SELECT " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_NAME + " FROM " + TastingTemplateAttributeValueTable.TABLE_NAME +
                         SqlHelper.innerJoin(TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeValueTable.TABLE_NAME, TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTE) +
                         SqlHelper.innerJoin(TastingTemplateAttributeGroupTable.TABLE_NAME, TastingTemplateAttributeValueTable.TABLE_NAME, TastingTemplateAttributeValueTable.COLUMN_ATTRIBUTEGROUP) +
-                        SqlHelper.innerJoin(TastingTemplateGroupTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_GROUP) +
-                        " WHERE " + TastingTemplateGroupTable.TABLE_NAME + "." + TastingTemplateGroupTable.COLUMN_NAME + " = ?" +
+                        SqlHelper.innerJoin(TastingTemplateSectionTable.TABLE_NAME, TastingTemplateAttributeTable.TABLE_NAME, TastingTemplateAttributeTable.COLUMN_SECTION) +
+                        " WHERE " + TastingTemplateSectionTable.TABLE_NAME + "." + TastingTemplateSectionTable.COLUMN_NAME + " = ?" +
                         " AND " + TastingTemplateAttributeTable.TABLE_NAME + "." + TastingTemplateAttributeTable.COLUMN_NAME + " = ? " +
                         " AND " + TastingTemplateAttributeGroupTable.TABLE_NAME + "." + TastingTemplateAttributeGroupTable.COLUMN_NAME + " = ? " +
                         " ORDER BY " + TastingTemplateAttributeValueTable.TABLE_NAME + "." + TastingTemplateAttributeValueTable.COLUMN_SEQUENCE, new String[] { group, attribute, attributeGroup });

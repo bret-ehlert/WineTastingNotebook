@@ -14,7 +14,7 @@ import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeGroupTabl
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateAttributeValueTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingTemplateBaseColumns;
-import com.oenoz.winetastingnotebook.db.schema.TastingTemplateGroupTable;
+import com.oenoz.winetastingnotebook.db.schema.TastingTemplateSectionTable;
 import com.oenoz.winetastingnotebook.db.schema.TastingValueTable;
 import com.oenoz.winetastingnotebook.db.schema.VarietyTable;
 import com.oenoz.winetastingnotebook.db.schema.WineTable;
@@ -39,7 +39,7 @@ public class TastingDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(TastingTemplateGroupTable.GetCreateSql());
+        db.execSQL(TastingTemplateSectionTable.GetCreateSql());
         db.execSQL(TastingTemplateAttributeTable.GetCreateSql());
         db.execSQL(TastingTemplateAttributeGroupTable.GetCreateSql());
         db.execSQL(TastingTemplateAttributeValueTable.GetCreateSql());
@@ -75,7 +75,7 @@ public class TastingDbHelper extends SQLiteOpenHelper {
                 int tabs = line.lastIndexOf("\t");
                 if (tabs == -1) {
                     ContentValues contentValues = TastingTemplateBaseColumns.getContentValues(line.trim(), templateGroupSequence++, true);
-                    templateGroupId = db.insert(TastingTemplateGroupTable.TABLE_NAME, null, contentValues);
+                    templateGroupId = db.insert(TastingTemplateSectionTable.TABLE_NAME, null, contentValues);
                     templateAttributeSequence = 0;
                     templateAttributeId = -1;
                     templateAttributeGroupSequence = 0;
@@ -83,7 +83,7 @@ public class TastingDbHelper extends SQLiteOpenHelper {
                 }
                 else if(tabs == 0) {
                     ContentValues contentValues = TastingTemplateBaseColumns.getContentValues(line.trim(), templateAttributeSequence++, true);
-                    contentValues.put(TastingTemplateAttributeTable.COLUMN_GROUP, templateGroupId);
+                    contentValues.put(TastingTemplateAttributeTable.COLUMN_SECTION, templateGroupId);
                     templateAttributeId = db.insert(TastingTemplateAttributeTable.TABLE_NAME, null, contentValues);
                     templateAttributeGroupSequence = 0;
                     templateAttributeGroupId = -1;
